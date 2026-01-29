@@ -5,6 +5,7 @@ import { Pair } from '@/lib/types';
 import { formatPrice, formatPercentage, formatNumber, getChainName, getChainColor, formatTimeAgo } from '@/lib/utils';
 import { ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { TokenLogo, getTokenLogoUrl } from '@/components/tokens/TokenLogo';
 
 interface PairsTableProps {
     pairs: Pair[];
@@ -148,6 +149,7 @@ export function PairsTable({ pairs, showChain = true, showCreatedAt = false, isL
                     {sortedPairs.map((pair, index) => {
                         const priceChange = pair.priceChange?.h24 || 0;
                         const isPositive = priceChange >= 0;
+                        const logoUrl = getTokenLogoUrl(pair);
 
                         return (
                             <tr
@@ -160,14 +162,12 @@ export function PairsTable({ pairs, showChain = true, showCreatedAt = false, isL
                                         className="flex items-center gap-3 hover:text-emerald-400 transition-colors"
                                     >
                                         <span className="text-gray-500 text-sm w-6">{index + 1}</span>
-                                        <div
-                                            className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs"
-                                            style={{
-                                                background: `linear-gradient(135deg, ${getChainColor(pair.chainId)}, #1a1a1a)`
-                                            }}
-                                        >
-                                            {pair.baseToken.symbol.slice(0, 2).toUpperCase()}
-                                        </div>
+                                        <TokenLogo
+                                            imageUrl={logoUrl}
+                                            symbol={pair.baseToken.symbol}
+                                            chainId={pair.chainId}
+                                            size="md"
+                                        />
                                         <div>
                                             <div className="font-medium text-white">{pair.baseToken.symbol}</div>
                                             <div className="text-xs text-gray-500">/{pair.quoteToken.symbol}</div>

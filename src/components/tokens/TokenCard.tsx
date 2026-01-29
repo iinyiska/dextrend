@@ -5,6 +5,7 @@ import { Pair } from '@/lib/types';
 import { formatPrice, formatPercentage, formatNumber, getChainName, getChainColor } from '@/lib/utils';
 import { Star, ExternalLink } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { TokenLogo, getTokenLogoUrl } from './TokenLogo';
 
 interface TokenCardProps {
     pair: Pair;
@@ -18,6 +19,7 @@ export function TokenCard({ pair, showChart = false }: TokenCardProps) {
 
     const priceChange = pair.priceChange?.h24 || 0;
     const isPositive = priceChange >= 0;
+    const logoUrl = getTokenLogoUrl(pair);
 
     const handleWatchlistClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -38,15 +40,13 @@ export function TokenCard({ pair, showChart = false }: TokenCardProps) {
             <div className="p-4">
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                        {/* Token Icon */}
-                        <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
-                            style={{
-                                background: `linear-gradient(135deg, ${getChainColor(pair.chainId)}, #1a1a1a)`
-                            }}
-                        >
-                            {pair.baseToken.symbol.slice(0, 2).toUpperCase()}
-                        </div>
+                        {/* Token Logo */}
+                        <TokenLogo
+                            imageUrl={logoUrl}
+                            symbol={pair.baseToken.symbol}
+                            chainId={pair.chainId}
+                            size="lg"
+                        />
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className="font-bold text-white">{pair.baseToken.symbol}</span>
@@ -71,8 +71,8 @@ export function TokenCard({ pair, showChart = false }: TokenCardProps) {
                     <button
                         onClick={handleWatchlistClick}
                         className={`p-2 rounded-lg transition-colors ${isWatched
-                                ? 'text-yellow-400 bg-yellow-400/10'
-                                : 'text-gray-500 hover:text-yellow-400 hover:bg-white/5'
+                            ? 'text-yellow-400 bg-yellow-400/10'
+                            : 'text-gray-500 hover:text-yellow-400 hover:bg-white/5'
                             }`}
                     >
                         <Star size={16} fill={isWatched ? 'currentColor' : 'none'} />

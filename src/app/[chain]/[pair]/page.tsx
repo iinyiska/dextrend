@@ -6,6 +6,7 @@ import { PriceChart } from '@/components/charts/PriceChart';
 import { formatPrice, formatPercentage, formatNumber, getChainName, getChainColor, shortenAddress, formatTimeAgo } from '@/lib/utils';
 import { Star, Copy, ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
 import { BoostTokenButton } from '@/components/admin/DynamicContent';
+import { TokenLogo, getTokenLogoUrl } from '@/components/tokens/TokenLogo';
 import Link from 'next/link';
 import { useStore } from '@/store/useStore';
 import { useState } from 'react';
@@ -69,6 +70,7 @@ export default function TokenDetailPage() {
 
     const priceChange = pair.priceChange?.h24 || 0;
     const isPositive = priceChange >= 0;
+    const logoUrl = getTokenLogoUrl(pair);
 
     return (
         <div className="space-y-6">
@@ -84,14 +86,13 @@ export default function TokenDetailPage() {
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div
-                        className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-2xl"
-                        style={{
-                            background: `linear-gradient(135deg, ${getChainColor(pair.chainId)}, #1a1a1a)`
-                        }}
-                    >
-                        {pair.baseToken.symbol.slice(0, 2).toUpperCase()}
-                    </div>
+                    <TokenLogo
+                        imageUrl={logoUrl}
+                        symbol={pair.baseToken.symbol}
+                        chainId={pair.chainId}
+                        size="xl"
+                        className="rounded-2xl"
+                    />
                     <div>
                         <div className="flex items-center gap-3 mb-1">
                             <h1 className="text-3xl font-bold text-white">{pair.baseToken.symbol}</h1>
