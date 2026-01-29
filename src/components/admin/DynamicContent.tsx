@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Rocket, ExternalLink, Send, MessageCircle } from 'lucide-react';
+import { getPromotedTokens, PromotedToken, getSiteSettings, getBanners, getAds } from '@/lib/supabase';
 
 interface SiteSettings {
     logo_url: string;
@@ -40,16 +41,7 @@ interface Ad {
     is_active: boolean;
 }
 
-export interface PromotedToken {
-    id: number;
-    chain_id: string;
-    pair_address: string;
-    token_name: string;
-    token_symbol: string;
-    logo_url: string;
-    is_active: boolean;
-    order: number;
-}
+export { type PromotedToken };
 
 const defaultSettings: SiteSettings = {
     logo_url: '',
@@ -73,6 +65,7 @@ export function useSiteSettings() {
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
+        // Here we could also add Supabase fetching logic for settings
         const savedSettings = localStorage.getItem('dextrend_site_settings');
         if (savedSettings) {
             setSettings({ ...defaultSettings, ...JSON.parse(savedSettings) });
@@ -109,19 +102,53 @@ export function useSiteSettings() {
     };
 }
 
-// Hook to get promoted tokens
+// Hook to get promoted tokens with Supabase integration
 export function usePromotedTokens() {
     const [promotedTokens, setPromotedTokens] = useState<PromotedToken[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        const savedTokens = localStorage.getItem('dextrend_promoted_tokens');
-        if (savedTokens) {
-            const tokens: PromotedToken[] = JSON.parse(savedTokens);
-            // Sort by order and filter active only
-            setPromotedTokens(tokens.filter(t => t.is_active).sort((a, b) => a.order - b.order));
+        let mounted = true;
+
+        async function fetchTokens() {
+            try {
+                // 1. Try fetching from Supabase (Remote DB for APK sync)
+                const sbTokens = await getPromotedTokens();
+                if (mounted && sbTokens && sbTokens.length > 0) {
+                    setPromotedTokens(sbTokens);
+                    setIsLoaded(true);
+                    return;
+                }
+            } catch (err) {
+                console.warn('Failed to fetch from Supabase, falling back to local storage', err);
+            }
+
+            // 2. Fallback to localStorage (Demo/Local mode only)
+            if (mounted) {
+                const savedTokens = localStorage.getItem('dextrend_promoted_tokens');
+                if (savedTokens) {
+                    try {
+                        const tokens: PromotedToken[] = JSON.parse(savedTokens);
+                        // Sort by order and filter active only
+                        // Note: PromotedToken interface has 'order_index', local might have 'order'. Normalizing if needed.
+                        const validTokens = tokens
+                            .filter(t => t.is_active)
+                            .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+                        setPromotedTokens(validTokens);
+                    } catch (e) {
+                        console.error('Error parsing local promoted tokens', e);
+                    }
+                }
+                setIsLoaded(true);
+            }
         }
-        setIsLoaded(true);
+
+        fetchTokens();
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     return { promotedTokens, isLoaded, hasPromotedTokens: promotedTokens.length > 0 };
@@ -148,7 +175,7 @@ export function BannerDisplay({ position }: { position: string }) {
                         className="relative overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:scale-[1.02] hover:border-white/20 hover:shadow-2xl"
                         style={{
                             background: banner.image_url
-                                ? `url(${banner.image_url}) center/cover`
+                                ? `url(${banner.image_url}) center / cover`
                                 : `linear-gradient(135deg, ${banner.gradient_from || '#10b981'}, ${banner.gradient_to || '#06b6d4'})`
                         }}
                     >
@@ -232,7 +259,7 @@ export function DynamicLogo() {
     if (!isLoaded) {
         return (
             <span className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                DexTrend
+                GujinDex
             </span>
         );
     }
@@ -247,7 +274,7 @@ export function DynamicLogo() {
         );
     }
 
-    const text = settings.logo_text || 'DexTrend';
+    const text = settings.logo_text || 'GujinDex';
     const midPoint = Math.floor(text.length / 2);
     const firstPart = text.substring(0, midPoint);
     const secondPart = text.substring(midPoint);
@@ -330,7 +357,7 @@ export function DynamicFooter() {
         <footer className="border-t border-white/10 mt-12 py-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <p className="text-gray-500 text-sm">
-                    {isLoaded ? settings.footer_text : '© 2024 DexTrend. All rights reserved.'}
+                    {isLoaded ? settings.footer_text : '© 2024 GujinDex. All rights reserved.'}
                 </p>
                 <SocialLinks />
             </div>

@@ -41,6 +41,18 @@ export interface Ad {
     created_at: string;
 }
 
+export interface PromotedToken {
+    id: number;
+    chain_id: string;
+    pair_address: string;
+    token_name: string;
+    token_symbol: string;
+    logo_url: string;
+    is_active: boolean;
+    order_index: number;
+    created_at: string;
+}
+
 // Fetch site settings
 export async function getSiteSettings(): Promise<SiteSettings | null> {
     const { data, error } = await supabase
@@ -92,6 +104,21 @@ export async function getAds(position?: string): Promise<Ad[]> {
 
     if (error) {
         console.error('Error fetching ads:', error);
+        return [];
+    }
+    return data || [];
+}
+
+// Fetch promoted tokens
+export async function getPromotedTokens(): Promise<PromotedToken[]> {
+    const { data, error } = await supabase
+        .from('promoted_tokens')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching promoted tokens:', error);
         return [];
     }
     return data || [];

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePromotedTokens, PromotedToken } from '@/components/admin/DynamicContent';
 import { TokenLogo } from './TokenLogo';
+import { TokenCard } from './TokenCard';
 import { Star, TrendingUp } from 'lucide-react';
 import { getChainName, getChainColor } from '@/lib/utils';
 
@@ -96,10 +97,25 @@ export function PromotedTokensGrid({
         const displayTokens = promotedTokens.slice(0, maxItems);
 
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {displayTokens.map((token) => (
-                    <PromotedTokenCard key={token.id} token={token} />
-                ))}
+            <div className="relative group">
+                {/* Horizontal Scrolling Container */}
+                <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+                    {displayTokens.length > 0 ? (
+                        displayTokens.map((token) => (
+                            <div key={token.id} className="snap-center shrink-0 w-[85vw] sm:w-[320px]">
+                                <PromotedTokenCard token={token} />
+                            </div>
+                        ))
+                    ) : (
+                        <div className="w-full text-center py-8 bg-[#1a1a1a]/50 rounded-xl border border-dashed border-white/10">
+                            <p className="text-gray-500">No promoted tokens active</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Fade overlays for smooth edges */}
+                <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#0d0d0d] to-transparent pointer-events-none md:hidden" />
+                <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#0d0d0d] to-transparent pointer-events-none md:hidden" />
             </div>
         );
     }
@@ -113,7 +129,22 @@ export function PromotedTokensGrid({
         );
     }
 
-    // Import TokenGrid dynamically to avoid circular deps
-    const { TokenGrid } = require('./TokenGrid');
-    return <TokenGrid pairs={apiTokens.slice(0, maxItems)} isLoading={isLoading} />;
+    // API Tokens Slider (same layout as promoted)
+    return (
+        <div className="relative group">
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+                {apiTokens.slice(0, maxItems).map((pair) => (
+                    <div key={`${pair.chainId}-${pair.pairAddress}`} className="snap-center shrink-0 w-[85vw] sm:w-[320px]">
+                        {/* We use TokenCard but ensure it styles nicely in slider */}
+                        <div className="h-full">
+                            <TokenCard pair={pair} />
+                        </div>
+                    </div>
+                ))}
+            </div>
+            {/* Fade overlays */}
+            <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#0d0d0d] to-transparent pointer-events-none md:hidden" />
+            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#0d0d0d] to-transparent pointer-events-none md:hidden" />
+        </div>
+    );
 }
