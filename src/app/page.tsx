@@ -6,7 +6,7 @@ import { PairsTable } from '@/components/tables/PairsTable';
 import { useStore } from '@/store/useStore';
 import { Flame, Zap, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { BannerDisplay, AdDisplay, useSiteSettings } from '@/components/admin/DynamicContent';
+import { BannerDisplay, AdDisplay, useSiteSettings, DynamicFooter } from '@/components/admin/DynamicContent';
 
 export default function HomePage() {
   const { selectedChain } = useStore();
@@ -156,6 +156,9 @@ export default function HomePage() {
 
       {/* Footer Ad */}
       <AdDisplay position="footer" />
+
+      {/* Dynamic Footer */}
+      <DynamicFooter />
     </div>
   );
 }

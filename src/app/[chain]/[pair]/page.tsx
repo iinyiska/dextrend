@@ -4,7 +4,8 @@ import { useParams } from 'next/navigation';
 import { usePair } from '@/hooks/useQueries';
 import { PriceChart } from '@/components/charts/PriceChart';
 import { formatPrice, formatPercentage, formatNumber, getChainName, getChainColor, shortenAddress, formatTimeAgo } from '@/lib/utils';
-import { Star, ExternalLink, Copy, ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
+import { Star, Copy, ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
+import { BoostTokenButton } from '@/components/admin/DynamicContent';
 import Link from 'next/link';
 import { useStore } from '@/store/useStore';
 import { useState } from 'react';
@@ -126,8 +127,8 @@ export default function TokenDetailPage() {
                     <button
                         onClick={handleWatchlistToggle}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-colors ${isWatched
-                                ? 'bg-yellow-400/20 text-yellow-400'
-                                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                            ? 'bg-yellow-400/20 text-yellow-400'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
                             }`}
                     >
                         <Star size={18} fill={isWatched ? 'currentColor' : 'none'} />
@@ -137,11 +138,11 @@ export default function TokenDetailPage() {
                         href={pair.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-black rounded-xl font-medium hover:bg-emerald-400 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-white/5 text-gray-400 hover:bg-white/10 rounded-xl font-medium transition-colors"
                     >
-                        <ExternalLink size={16} />
-                        DexScreener
+                        Chart
                     </a>
+                    <BoostTokenButton tokenSymbol={pair.baseToken.symbol} />
                 </div>
             </div>
 
