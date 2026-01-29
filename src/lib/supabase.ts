@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Use placeholders to prevent build errors if env vars are missing
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 
-if (!supabaseUrl) {
-    console.warn('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    console.warn('Missing NEXT_PUBLIC_SUPABASE_URL environment variable. Using placeholder for build.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
