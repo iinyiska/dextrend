@@ -8,27 +8,6 @@ interface PriceChartProps {
     height?: number;
 }
 
-// Generate mock line data for demo
-function generateMockData() {
-    const data = [];
-    const now = Math.floor(Date.now() / 1000);
-    let lastValue = 100 + Math.random() * 50;
-
-    for (let i = 200; i >= 0; i--) {
-        const time = now - i * 3600;
-        const volatility = 0.02 + Math.random() * 0.03;
-        const change = (Math.random() - 0.5) * volatility * lastValue;
-        lastValue = lastValue + change;
-
-        data.push({
-            time: time,
-            value: lastValue,
-        });
-    }
-
-    return data;
-}
-
 export function PriceChart({ height = 400 }: PriceChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,10 +15,34 @@ export function PriceChart({ height = 400 }: PriceChartProps) {
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
+        if (typeof window === 'undefined') return;
 
         // Dynamic import to avoid SSR issues
         import('lightweight-charts').then((LightweightCharts) => {
             if (!chartContainerRef.current) return;
+            if (chartRef.current) return; // Already initialized
+
+            // Generate mock line data for demo
+            const generateMockData = () => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const data: any[] = [];
+                const now = Math.floor(Date.now() / 1000);
+                let lastValue = 100 + Math.random() * 50;
+
+                for (let i = 200; i >= 0; i--) {
+                    const time = now - i * 3600;
+                    const volatility = 0.02 + Math.random() * 0.03;
+                    const change = (Math.random() - 0.5) * volatility * lastValue;
+                    lastValue = lastValue + change;
+
+                    data.push({
+                        time: time as LightweightCharts.Time,
+                        value: lastValue,
+                    });
+                }
+
+                return data;
+            };
 
             // Create chart
             const chart = LightweightCharts.createChart(chartContainerRef.current, {
@@ -88,10 +91,6 @@ export function PriceChart({ height = 400 }: PriceChartProps) {
             };
 
             window.addEventListener('resize', handleResize);
-
-            return () => {
-                window.removeEventListener('resize', handleResize);
-            };
         });
 
         return () => {
