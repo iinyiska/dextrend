@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface PriceChartProps {
     pairAddress?: string;
@@ -12,22 +12,25 @@ export function PriceChart({ height = 400 }: PriceChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const chartRef = useRef<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
         if (typeof window === 'undefined') return;
 
         // Dynamic import to avoid SSR issues
-        import('lightweight-charts').then((LightweightCharts) => {
-            if (!chartContainerRef.current) return;
-            if (chartRef.current) return; // Already initialized
+        const initChart = async () => {
+            try {
+                const LightweightCharts = await import('lightweight-charts');
 
-            // Generate mock line data for demo
-            const generateMockData = () => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const data: any[] = [];
+                if (!chartContainerRef.current) return;
+                if (chartRef.current) return; // Already initialized
+
+                // Generate mock line data for demo
                 const now = Math.floor(Date.now() / 1000);
                 let lastValue = 100 + Math.random() * 50;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const data: any[] = [];
 
                 for (let i = 200; i >= 0; i--) {
                     const time = now - i * 3600;
@@ -36,62 +39,66 @@ export function PriceChart({ height = 400 }: PriceChartProps) {
                     lastValue = lastValue + change;
 
                     data.push({
-                        time: time as LightweightCharts.Time,
+                        time,
                         value: lastValue,
                     });
                 }
 
-                return data;
-            };
+                // Create chart
+                const chart = LightweightCharts.createChart(chartContainerRef.current, {
+                    layout: {
+                        background: { color: 'transparent' },
+                        textColor: '#888888',
+                    },
+                    grid: {
+                        vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                        horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                    },
+                    rightPriceScale: {
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    timeScale: {
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        timeVisible: true,
+                        secondsVisible: false,
+                    },
+                    width: chartContainerRef.current.clientWidth,
+                    height: height,
+                });
 
-            // Create chart
-            const chart = LightweightCharts.createChart(chartContainerRef.current, {
-                layout: {
-                    background: { color: 'transparent' },
-                    textColor: '#888888',
-                },
-                grid: {
-                    vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-                    horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
-                },
-                rightPriceScale: {
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                },
-                timeScale: {
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                    timeVisible: true,
-                    secondsVisible: false,
-                },
-                width: chartContainerRef.current.clientWidth,
-                height: height,
-            });
+                // Add line series
+                const lineSeries = chart.addSeries(LightweightCharts.LineSeries, {
+                    color: '#00ff88',
+                    lineWidth: 2,
+                });
 
-            // Add line series using addSeries
-            const lineSeries = chart.addSeries(LightweightCharts.LineSeries, {
-                color: '#00ff88',
-                lineWidth: 2,
-            });
+                // Set data with type assertion
+                lineSeries.setData(data as Parameters<typeof lineSeries.setData>[0]);
 
-            // Set data
-            const data = generateMockData();
-            lineSeries.setData(data);
+                // Fit content
+                chart.timeScale().fitContent();
 
-            // Fit content
-            chart.timeScale().fitContent();
+                chartRef.current = chart;
+                setIsLoading(false);
 
-            chartRef.current = chart;
+                // Handle resize
+                const handleResize = () => {
+                    if (chartContainerRef.current && chartRef.current) {
+                        chartRef.current.applyOptions({
+                            width: chartContainerRef.current.clientWidth,
+                        });
+                    }
+                };
 
-            // Handle resize
-            const handleResize = () => {
-                if (chartContainerRef.current && chartRef.current) {
-                    chartRef.current.applyOptions({
-                        width: chartContainerRef.current.clientWidth,
-                    });
-                }
-            };
+                window.addEventListener('resize', handleResize);
+                return () => window.removeEventListener('resize', handleResize);
+            } catch (error) {
+                console.error('Failed to initialize chart:', error);
+                setIsLoading(false);
+            }
+        };
 
-            window.addEventListener('resize', handleResize);
-        });
+        initChart();
 
         return () => {
             if (chartRef.current) {
@@ -103,6 +110,14 @@ export function PriceChart({ height = 400 }: PriceChartProps) {
 
     return (
         <div className="relative">
+            {isLoading && (
+                <div
+                    className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a] rounded-xl"
+                    style={{ height }}
+                >
+                    <div className="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full" />
+                </div>
+            )}
             <div
                 ref={chartContainerRef}
                 style={{ height }}
