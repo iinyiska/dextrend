@@ -6,15 +6,22 @@ import { PairsTable } from '@/components/tables/PairsTable';
 import { useStore } from '@/store/useStore';
 import { Flame, Zap, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { BannerDisplay, AdDisplay, useSiteSettings } from '@/components/admin/DynamicContent';
 
 export default function HomePage() {
   const { selectedChain } = useStore();
+  const { settings, isLoaded } = useSiteSettings();
   const { data: newPairs, isLoading: loadingNewPairs } = useNewPairs(selectedChain || undefined);
   const { data: gainers, isLoading: loadingGainers } = useGainers();
   const { data: losers, isLoading: loadingLosers } = useLosers();
 
+  const logoText = isLoaded ? settings.logo_text : 'DexTrend';
+
   return (
     <div className="space-y-8">
+      {/* Hero Banner (from admin) */}
+      <BannerDisplay position="hero" />
+
       {/* Hero Section */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900/30 via-[#1a1a1a] to-cyan-900/30 p-8 border border-white/5">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
@@ -24,8 +31,12 @@ export default function HomePage() {
               <TrendingUp size={24} className="text-black" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">DexTrend</h1>
-              <p className="text-gray-400">Real-Time Multi-Chain DEX Analytics</p>
+              <h1 className="text-3xl font-bold text-white">{logoText}</h1>
+              <p className="text-gray-400">
+                {isLoaded && settings.site_description
+                  ? settings.site_description
+                  : 'Real-Time Multi-Chain DEX Analytics'}
+              </p>
             </div>
           </div>
 
@@ -55,6 +66,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Ad Slot - Between Content */}
+      <AdDisplay position="between_content" />
 
       {/* Trending Section */}
       <section>
@@ -102,6 +116,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Ad Slot - Between Sections */}
+      <AdDisplay position="sidebar" />
+
       {/* Gainers & Losers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gainers */}
@@ -136,6 +153,9 @@ export default function HomePage() {
           </div>
         </section>
       </div>
+
+      {/* Footer Ad */}
+      <AdDisplay position="footer" />
     </div>
   );
 }
