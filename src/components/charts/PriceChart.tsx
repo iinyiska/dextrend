@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createChart, IChartApi, ISeriesApi, CandlestickData, Time } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi } from 'lightweight-charts';
 
 interface PriceChartProps {
     pairAddress?: string;
@@ -9,31 +9,22 @@ interface PriceChartProps {
     height?: number;
 }
 
-// Generate mock candlestick data for demo
-function generateMockData(): CandlestickData<Time>[] {
-    const data: CandlestickData<Time>[] = [];
+// Generate mock line data for demo
+function generateMockData() {
+    const data = [];
     const now = Math.floor(Date.now() / 1000);
-    let lastClose = 100 + Math.random() * 50;
+    let lastValue = 100 + Math.random() * 50;
 
     for (let i = 200; i >= 0; i--) {
-        const time = (now - i * 3600) as Time;
+        const time = now - i * 3600;
         const volatility = 0.02 + Math.random() * 0.03;
-        const change = (Math.random() - 0.5) * volatility * lastClose;
-
-        const open = lastClose;
-        const close = open + change;
-        const high = Math.max(open, close) + Math.random() * volatility * lastClose * 0.5;
-        const low = Math.min(open, close) - Math.random() * volatility * lastClose * 0.5;
+        const change = (Math.random() - 0.5) * volatility * lastValue;
+        lastValue = lastValue + change;
 
         data.push({
-            time,
-            open,
-            high,
-            low,
-            close,
+            time: time,
+            value: lastValue,
         });
-
-        lastClose = close;
     }
 
     return data;
@@ -42,7 +33,6 @@ function generateMockData(): CandlestickData<Time>[] {
 export function PriceChart({ height = 400 }: PriceChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
-    const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -50,27 +40,12 @@ export function PriceChart({ height = 400 }: PriceChartProps) {
         // Create chart
         const chart = createChart(chartContainerRef.current, {
             layout: {
-                background: { color: 'transparent' },
+                background: { type: ColorType.Solid, color: 'transparent' },
                 textColor: '#888888',
             },
             grid: {
                 vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
                 horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
-            },
-            crosshair: {
-                mode: 1,
-                vertLine: {
-                    color: '#00ff88',
-                    width: 1,
-                    style: 2,
-                    labelBackgroundColor: '#00ff88',
-                },
-                horzLine: {
-                    color: '#00ff88',
-                    width: 1,
-                    style: 2,
-                    labelBackgroundColor: '#00ff88',
-                },
             },
             rightPriceScale: {
                 borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -80,30 +55,26 @@ export function PriceChart({ height = 400 }: PriceChartProps) {
                 timeVisible: true,
                 secondsVisible: false,
             },
-            handleScroll: {
-                vertTouchDrag: false,
-            },
+            width: chartContainerRef.current.clientWidth,
+            height: height,
         });
 
-        // Add candlestick series
-        const candlestickSeries = chart.addCandlestickSeries({
-            upColor: '#00ff88',
-            downColor: '#ff3b5c',
-            borderUpColor: '#00ff88',
-            borderDownColor: '#ff3b5c',
-            wickUpColor: '#00ff88',
-            wickDownColor: '#ff3b5c',
+        // Add area series (supported in v5)
+        const areaSeries = chart.addAreaSeries({
+            lineColor: '#00ff88',
+            topColor: 'rgba(0, 255, 136, 0.4)',
+            bottomColor: 'rgba(0, 255, 136, 0.0)',
+            lineWidth: 2,
         });
 
         // Set data
         const data = generateMockData();
-        candlestickSeries.setData(data);
+        areaSeries.setData(data);
 
         // Fit content
         chart.timeScale().fitContent();
 
         chartRef.current = chart;
-        seriesRef.current = candlestickSeries;
 
         // Handle resize
         const handleResize = () => {
@@ -123,7 +94,7 @@ export function PriceChart({ height = 400 }: PriceChartProps) {
                 chartRef.current = null;
             }
         };
-    }, []);
+    }, [height]);
 
     return (
         <div className="relative">
