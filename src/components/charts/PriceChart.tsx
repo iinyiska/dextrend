@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createChart, ColorType, IChartApi } from 'lightweight-charts';
 
 interface PriceChartProps {
     pairAddress?: string;
@@ -32,63 +31,70 @@ function generateMockData() {
 
 export function PriceChart({ height = 400 }: PriceChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
-    const chartRef = useRef<IChartApi | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chartRef = useRef<any>(null);
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
-        // Create chart
-        const chart = createChart(chartContainerRef.current, {
-            layout: {
-                background: { type: ColorType.Solid, color: 'transparent' },
-                textColor: '#888888',
-            },
-            grid: {
-                vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-                horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
-            },
-            rightPriceScale: {
-                borderColor: 'rgba(255, 255, 255, 0.1)',
-            },
-            timeScale: {
-                borderColor: 'rgba(255, 255, 255, 0.1)',
-                timeVisible: true,
-                secondsVisible: false,
-            },
-            width: chartContainerRef.current.clientWidth,
-            height: height,
+        // Dynamic import to avoid SSR issues
+        import('lightweight-charts').then((LightweightCharts) => {
+            if (!chartContainerRef.current) return;
+
+            // Create chart
+            const chart = LightweightCharts.createChart(chartContainerRef.current, {
+                layout: {
+                    background: { color: 'transparent' },
+                    textColor: '#888888',
+                },
+                grid: {
+                    vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                    horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                },
+                rightPriceScale: {
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                },
+                timeScale: {
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    timeVisible: true,
+                    secondsVisible: false,
+                },
+                width: chartContainerRef.current.clientWidth,
+                height: height,
+            });
+
+            // Add line series using addSeries
+            const lineSeries = chart.addSeries(LightweightCharts.LineSeries, {
+                color: '#00ff88',
+                lineWidth: 2,
+            });
+
+            // Set data
+            const data = generateMockData();
+            lineSeries.setData(data);
+
+            // Fit content
+            chart.timeScale().fitContent();
+
+            chartRef.current = chart;
+
+            // Handle resize
+            const handleResize = () => {
+                if (chartContainerRef.current && chartRef.current) {
+                    chartRef.current.applyOptions({
+                        width: chartContainerRef.current.clientWidth,
+                    });
+                }
+            };
+
+            window.addEventListener('resize', handleResize);
+
+            return () => {
+                window.removeEventListener('resize', handleResize);
+            };
         });
-
-        // Add area series (supported in v5)
-        const areaSeries = chart.addAreaSeries({
-            lineColor: '#00ff88',
-            topColor: 'rgba(0, 255, 136, 0.4)',
-            bottomColor: 'rgba(0, 255, 136, 0.0)',
-            lineWidth: 2,
-        });
-
-        // Set data
-        const data = generateMockData();
-        areaSeries.setData(data);
-
-        // Fit content
-        chart.timeScale().fitContent();
-
-        chartRef.current = chart;
-
-        // Handle resize
-        const handleResize = () => {
-            if (chartContainerRef.current && chartRef.current) {
-                chartRef.current.applyOptions({
-                    width: chartContainerRef.current.clientWidth,
-                });
-            }
-        };
-
-        window.addEventListener('resize', handleResize);
 
         return () => {
-            window.removeEventListener('resize', handleResize);
             if (chartRef.current) {
                 chartRef.current.remove();
                 chartRef.current = null;
@@ -101,7 +107,7 @@ export function PriceChart({ height = 400 }: PriceChartProps) {
             <div
                 ref={chartContainerRef}
                 style={{ height }}
-                className="w-full"
+                className="w-full bg-[#1a1a1a] rounded-xl"
             />
 
             {/* Time range buttons */}
