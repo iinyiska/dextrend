@@ -1,5 +1,5 @@
 'use client';
-
+import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePromotedTokens, PromotedToken } from '@/components/admin/DynamicContent';
 import { TokenLogo } from './TokenLogo';
@@ -63,13 +63,44 @@ function PromotedTokenCard({ token }: { token: PromotedToken }) {
 export function PromotedTokensGrid({
     apiTokens = [],
     isLoading = false,
-    maxItems = 4
+    maxItems = 5
 }: {
     apiTokens?: any[];
     isLoading?: boolean;
     maxItems?: number;
 }) {
     const { promotedTokens, hasPromotedTokens, isLoaded } = usePromotedTokens();
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll logic
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (scrollRef.current) {
+                const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+                const gap = 12; // gap-3 is 12px
+                // Get width of first card
+                const firstCard = scrollRef.current.firstElementChild as HTMLElement;
+                const itemWidth = firstCard ? firstCard.clientWidth : 0;
+
+                if (itemWidth === 0) return;
+
+                // Check if we are near the end
+                if (scrollLeft + clientWidth >= scrollWidth - 10) {
+                    // Reset to start
+                    scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    // Scroll next
+                    scrollRef.current.scrollBy({ left: itemWidth + gap, behavior: 'smooth' });
+                }
+            }
+        }, 5000); // 5 seconds
+
+        return () => clearInterval(interval);
+    }, [promotedTokens, apiTokens, isLoaded]);
+
+    const displayTokens = hasPromotedTokens
+        ? promotedTokens.slice(0, maxItems)
+        : (apiTokens?.slice(0, maxItems) || []);
 
     // Show loading skeleton
     if (isLoading || !isLoaded) {
@@ -85,66 +116,44 @@ export function PromotedTokensGrid({
                             </div>
                         </div>
                         <div className="h-6 w-24 bg-white/10 rounded mb-2" />
-                        <div className="h-4 w-16 bg-white/10 rounded" />
                     </div>
                 ))}
             </div>
         );
     }
 
-    // If we have promoted tokens, show them first
-    if (hasPromotedTokens) {
-        const displayTokens = promotedTokens.slice(0, maxItems);
-
+    if (displayTokens.length === 0) {
         return (
-            <div className="relative group">
-                {/* Horizontal Scrolling Container */}
-                <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-                    {displayTokens.length > 0 ? (
-                        displayTokens.map((token) => (
-                            <div key={token.id} className="snap-center shrink-0 w-[85vw] sm:w-[320px]">
-                                <PromotedTokenCard token={token} />
-                            </div>
-                        ))
-                    ) : (
-                        <div className="w-full text-center py-8 bg-[#1a1a1a]/50 rounded-xl border border-dashed border-white/10">
-                            <p className="text-gray-500">No promoted tokens active</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Fade overlays for smooth edges */}
-                <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#0d0d0d] to-transparent pointer-events-none md:hidden" />
-                <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#0d0d0d] to-transparent pointer-events-none md:hidden" />
+            <div className="w-full text-center py-8 bg-[#1a1a1a]/50 rounded-xl border border-dashed border-white/10">
+                <p className="text-gray-500">No tokens to display</p>
             </div>
         );
     }
 
-    // Fallback to API tokens if no promoted tokens
-    if (!apiTokens || apiTokens.length === 0) {
-        return (
-            <div className="text-center py-12 text-gray-500">
-                <p>No tokens to display</p>
-            </div>
-        );
-    }
-
-    // API Tokens Slider (same layout as promoted)
     return (
-        <div className="relative group">
-            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-                {apiTokens.slice(0, maxItems).map((pair) => (
-                    <div key={`${pair.chainId}-${pair.pairAddress}`} className="snap-center shrink-0 w-[85vw] sm:w-[320px]">
-                        {/* We use TokenCard but ensure it styles nicely in slider */}
-                        <div className="h-full">
-                            <TokenCard pair={pair} />
-                        </div>
+        <div className="relative group -mx-4 md:mx-0">
+            {/* Horizontal Scrolling Container */}
+            <div
+                ref={scrollRef}
+                className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-4 pb-1 md:px-0 scrollbar-hide"
+                style={{ scrollBehavior: 'smooth' }}
+            >
+                {displayTokens.map((token: any) => (
+                    <div
+                        key={token.id || `${token.chainId}-${token.pairAddress}`}
+                        className="snap-center shrink-0 w-[90%] sm:w-[320px]"
+                    >
+                        {/* Render PromotedCard or TokenCard based on data type */}
+                        {token.pair_address ? (
+                            <PromotedTokenCard token={token as PromotedToken} />
+                        ) : (
+                            <TokenCard pair={token} />
+                        )}
                     </div>
                 ))}
             </div>
-            {/* Fade overlays */}
-            <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#0d0d0d] to-transparent pointer-events-none md:hidden" />
-            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#0d0d0d] to-transparent pointer-events-none md:hidden" />
+
+            {/* Simple indicator dots could be added here if needed */}
         </div>
     );
 }
