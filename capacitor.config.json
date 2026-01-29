@@ -1,0 +1,23 @@
+{
+    "$schema": "https://capacitorjs.com/docs/cli/configuration",
+    "appId": "com.dextrend.app",
+    "appName": "DexTrend",
+    "webDir": "out",
+    "server": {
+        "androidScheme": "https",
+        "url": "https://dextrend.vercel.app",
+        "cleartext": true
+    },
+    "plugins": {
+        "SplashScreen": {
+            "launchShowDuration": 2000,
+            "backgroundColor": "#0d0d0d",
+            "showSpinner": true,
+            "spinnerColor": "#00ff88"
+        }
+    },
+    "android": {
+        "allowMixedContent": true,
+        "backgroundColor": "#0d0d0d"
+    }
+}
