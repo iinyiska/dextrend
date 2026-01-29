@@ -40,6 +40,17 @@ interface Ad {
     is_active: boolean;
 }
 
+export interface PromotedToken {
+    id: number;
+    chain_id: string;
+    pair_address: string;
+    token_name: string;
+    token_symbol: string;
+    logo_url: string;
+    is_active: boolean;
+    order: number;
+}
+
 const defaultSettings: SiteSettings = {
     logo_url: '',
     logo_text: 'DexTrend',
@@ -96,6 +107,24 @@ export function useSiteSettings() {
         getBannersByPosition,
         getAdsByPosition
     };
+}
+
+// Hook to get promoted tokens
+export function usePromotedTokens() {
+    const [promotedTokens, setPromotedTokens] = useState<PromotedToken[]>([]);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    useEffect(() => {
+        const savedTokens = localStorage.getItem('dextrend_promoted_tokens');
+        if (savedTokens) {
+            const tokens: PromotedToken[] = JSON.parse(savedTokens);
+            // Sort by order and filter active only
+            setPromotedTokens(tokens.filter(t => t.is_active).sort((a, b) => a.order - b.order));
+        }
+        setIsLoaded(true);
+    }, []);
+
+    return { promotedTokens, isLoaded, hasPromotedTokens: promotedTokens.length > 0 };
 }
 
 // Attractive Interactive Banner Component

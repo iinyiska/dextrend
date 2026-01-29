@@ -2,6 +2,7 @@
 
 import { useNewPairs, useGainers, useLosers } from '@/hooks/useQueries';
 import { TokenGrid } from '@/components/tokens/TokenGrid';
+import { PromotedTokensGrid } from '@/components/tokens/PromotedTokensGrid';
 import { PairsTable } from '@/components/tables/PairsTable';
 import { useStore } from '@/store/useStore';
 import { Flame, Zap, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
@@ -70,7 +71,7 @@ export default function HomePage() {
       {/* Ad Slot - Between Content */}
       <AdDisplay position="between_content" />
 
-      {/* Trending Section */}
+      {/* Trending Section - Shows PROMOTED tokens first */}
       <section>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -78,8 +79,8 @@ export default function HomePage() {
               <Flame size={20} className="text-orange-400" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Trending Tokens</h2>
-              <p className="text-sm text-gray-500">Most active tokens right now</p>
+              <h2 className="text-xl font-bold text-white">🔥 Trending Tokens</h2>
+              <p className="text-sm text-gray-500">Hottest tokens right now</p>
             </div>
           </div>
           <Link
@@ -89,7 +90,7 @@ export default function HomePage() {
             View All <ArrowRight size={14} />
           </Link>
         </div>
-        <TokenGrid pairs={newPairs?.slice(0, 4)} isLoading={loadingNewPairs} />
+        <PromotedTokensGrid apiTokens={newPairs?.slice(0, 4)} isLoading={loadingNewPairs} maxItems={4} />
       </section>
 
       {/* New Pairs Section */}

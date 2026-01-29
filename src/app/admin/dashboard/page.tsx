@@ -47,6 +47,17 @@ interface Ad {
     is_active: boolean;
 }
 
+interface PromotedToken {
+    id: number;
+    chain_id: string;
+    pair_address: string;
+    token_name: string;
+    token_symbol: string;
+    logo_url: string;
+    is_active: boolean;
+    order: number;
+}
+
 const defaultSettings: SiteSettings = {
     logo_url: '',
     logo_text: 'DexTrend',
@@ -65,7 +76,7 @@ const defaultSettings: SiteSettings = {
 export default function AdminDashboard() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'settings' | 'promote' | 'banners' | 'ads' | 'social'>('settings');
+    const [activeTab, setActiveTab] = useState<'settings' | 'promote' | 'banners' | 'ads' | 'social' | 'trending'>('settings');
 
     const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
     const [banners, setBanners] = useState<Banner[]>([]);
@@ -87,6 +98,16 @@ export default function AdminDashboard() {
         name: '',
         ad_code: '',
         position: 'sidebar',
+        is_active: true
+    });
+
+    const [promotedTokens, setPromotedTokens] = useState<PromotedToken[]>([]);
+    const [newToken, setNewToken] = useState<Omit<PromotedToken, 'id' | 'order'>>({
+        chain_id: 'solana',
+        pair_address: '',
+        token_name: '',
+        token_symbol: '',
+        logo_url: '',
         is_active: true
     });
 
@@ -130,6 +151,11 @@ export default function AdminDashboard() {
         if (savedAds) {
             setAds(JSON.parse(savedAds));
         }
+
+        const savedTokens = localStorage.getItem('dextrend_promoted_tokens');
+        if (savedTokens) {
+            setPromotedTokens(JSON.parse(savedTokens));
+        }
     };
 
     const saveSettings = () => {
@@ -138,6 +164,7 @@ export default function AdminDashboard() {
             localStorage.setItem('dextrend_site_settings', JSON.stringify(settings));
             localStorage.setItem('dextrend_banners', JSON.stringify(banners));
             localStorage.setItem('dextrend_ads', JSON.stringify(ads));
+            localStorage.setItem('dextrend_promoted_tokens', JSON.stringify(promotedTokens));
             setSaveStatus('saved');
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch {
@@ -183,6 +210,48 @@ export default function AdminDashboard() {
 
     const removeAd = (id: number) => {
         setAds(ads.filter(a => a.id !== id));
+    };
+
+    const addPromotedToken = () => {
+        if (!newToken.pair_address || !newToken.token_symbol) return;
+        if (promotedTokens.length >= 10) {
+            alert('Maximum 10 promoted tokens allowed');
+            return;
+        }
+        setPromotedTokens([...promotedTokens, {
+            ...newToken,
+            id: Date.now(),
+            order: promotedTokens.length + 1
+        }]);
+        setNewToken({
+            chain_id: 'solana',
+            pair_address: '',
+            token_name: '',
+            token_symbol: '',
+            logo_url: '',
+            is_active: true
+        });
+    };
+
+    const removePromotedToken = (id: number) => {
+        setPromotedTokens(promotedTokens.filter(t => t.id !== id));
+    };
+
+    const togglePromotedToken = (id: number) => {
+        setPromotedTokens(promotedTokens.map(t => t.id === id ? { ...t, is_active: !t.is_active } : t));
+    };
+
+    const moveToken = (id: number, direction: 'up' | 'down') => {
+        const index = promotedTokens.findIndex(t => t.id === id);
+        if (index === -1) return;
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === promotedTokens.length - 1) return;
+
+        const newTokens = [...promotedTokens];
+        const swapIndex = direction === 'up' ? index - 1 : index + 1;
+        [newTokens[index], newTokens[swapIndex]] = [newTokens[swapIndex], newTokens[index]];
+        newTokens.forEach((t, i) => t.order = i + 1);
+        setPromotedTokens(newTokens);
     };
 
     const handleLogout = () => {
@@ -231,6 +300,7 @@ export default function AdminDashboard() {
                     <nav className="space-y-2">
                         {[
                             { id: 'settings', label: '⚙️ Site Settings', icon: '⚙️' },
+                            { id: 'trending', label: '🔥 Promoted Trending', icon: '🔥' },
                             { id: 'promote', label: '🚀 Promote Link', icon: '🚀' },
                             { id: 'social', label: '🔗 Social Links', icon: '🔗' },
                             { id: 'banners', label: '🖼️ Banners', icon: '🖼️' },
@@ -240,8 +310,8 @@ export default function AdminDashboard() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
                                 className={`w-full px-4 py-3 rounded-lg text-left transition-colors ${activeTab === tab.id
-                                        ? 'bg-emerald-500/20 text-emerald-400'
-                                        : 'text-gray-400 hover:bg-white/5'
+                                    ? 'bg-emerald-500/20 text-emerald-400'
+                                    : 'text-gray-400 hover:bg-white/5'
                                     }`}
                             >
                                 {tab.label}
@@ -347,6 +417,160 @@ export default function AdminDashboard() {
                                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
                                     />
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Promoted Trending Tab */}
+                    {activeTab === 'trending' && (
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold text-white">🔥 Promoted Trending Tokens</h2>
+                            <p className="text-gray-400">
+                                Add up to 10 tokens that will appear in the Trending section.
+                                These are for paid promotions. If empty, default trending from API will be shown.
+                            </p>
+
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
+                                <h3 className="text-lg font-semibold text-white">Add Promoted Token ({promotedTokens.length}/10)</h3>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Chain</label>
+                                        <select
+                                            value={newToken.chain_id}
+                                            onChange={(e) => setNewToken({ ...newToken, chain_id: e.target.value })}
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
+                                        >
+                                            <option value="solana">Solana</option>
+                                            <option value="ethereum">Ethereum</option>
+                                            <option value="bsc">BNB Chain</option>
+                                            <option value="base">Base</option>
+                                            <option value="arbitrum">Arbitrum</option>
+                                            <option value="polygon">Polygon</option>
+                                            <option value="avalanche">Avalanche</option>
+                                            <option value="optimism">Optimism</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Pair Address</label>
+                                        <input
+                                            type="text"
+                                            value={newToken.pair_address}
+                                            onChange={(e) => setNewToken({ ...newToken, pair_address: e.target.value })}
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
+                                            placeholder="0x... or base58..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Token Name</label>
+                                        <input
+                                            type="text"
+                                            value={newToken.token_name}
+                                            onChange={(e) => setNewToken({ ...newToken, token_name: e.target.value })}
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
+                                            placeholder="e.g., Pepe"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Token Symbol</label>
+                                        <input
+                                            type="text"
+                                            value={newToken.token_symbol}
+                                            onChange={(e) => setNewToken({ ...newToken, token_symbol: e.target.value })}
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
+                                            placeholder="e.g., PEPE"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Logo URL (optional)</label>
+                                    <input
+                                        type="text"
+                                        value={newToken.logo_url}
+                                        onChange={(e) => setNewToken({ ...newToken, logo_url: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
+                                        placeholder="https://... (leave empty to use DexScreener logo)"
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={addPromotedToken}
+                                    disabled={promotedTokens.length >= 10}
+                                    className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-semibold rounded-xl transition-colors"
+                                >
+                                    Add Token
+                                </button>
+                            </div>
+
+                            {/* Promoted Tokens List */}
+                            <div className="space-y-3">
+                                <h3 className="text-lg font-semibold text-white">Current Promoted Tokens</h3>
+                                {promotedTokens.map((token, index) => (
+                                    <div key={token.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-2xl font-bold text-gray-500 w-8">#{index + 1}</span>
+                                                {token.logo_url ? (
+                                                    <img src={token.logo_url} alt={token.token_symbol} className="w-10 h-10 rounded-full" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white font-bold">
+                                                        {token.token_symbol.slice(0, 2)}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <div className="text-white font-medium">
+                                                        {token.token_name || token.token_symbol}
+                                                        <span className="text-gray-400 ml-2">${token.token_symbol}</span>
+                                                    </div>
+                                                    <div className="text-sm text-gray-500">
+                                                        {token.chain_id} • {token.pair_address.slice(0, 8)}...{token.pair_address.slice(-6)}
+                                                    </div>
+                                                </div>
+                                                <span className={`px-2 py-1 rounded-full text-xs ${token.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                    {token.is_active ? 'Active' : 'Inactive'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => moveToken(token.id, 'up')}
+                                                    disabled={index === 0}
+                                                    className="p-2 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                                                >
+                                                    ↑
+                                                </button>
+                                                <button
+                                                    onClick={() => moveToken(token.id, 'down')}
+                                                    disabled={index === promotedTokens.length - 1}
+                                                    className="p-2 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                                                >
+                                                    ↓
+                                                </button>
+                                                <button
+                                                    onClick={() => togglePromotedToken(token.id)}
+                                                    className={`px-3 py-1 rounded-lg transition-colors ${token.is_active ? 'bg-yellow-500/20 text-yellow-400' : 'bg-emerald-500/20 text-emerald-400'}`}
+                                                >
+                                                    {token.is_active ? 'Disable' : 'Enable'}
+                                                </button>
+                                                <button
+                                                    onClick={() => removePromotedToken(token.id)}
+                                                    className="px-3 py-1 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {promotedTokens.length === 0 && (
+                                    <div className="bg-white/5 border border-white/10 border-dashed rounded-xl p-8 text-center">
+                                        <p className="text-gray-500">No promoted tokens yet.</p>
+                                        <p className="text-gray-600 text-sm mt-2">Trending will show default tokens from DexScreener API.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -649,10 +873,10 @@ export default function AdminDashboard() {
                     onClick={saveSettings}
                     disabled={saveStatus === 'saving'}
                     className={`px-8 py-4 rounded-xl font-semibold shadow-lg transition-all ${saveStatus === 'saved'
-                            ? 'bg-green-500 text-white'
-                            : saveStatus === 'error'
-                                ? 'bg-red-500 text-white'
-                                : 'bg-emerald-500 hover:bg-emerald-600 text-black'
+                        ? 'bg-green-500 text-white'
+                        : saveStatus === 'error'
+                            ? 'bg-red-500 text-white'
+                            : 'bg-emerald-500 hover:bg-emerald-600 text-black'
                         }`}
                 >
                     {saveStatus === 'saving' ? 'Saving...' :

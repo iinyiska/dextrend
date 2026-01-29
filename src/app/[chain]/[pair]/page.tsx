@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { usePair } from '@/hooks/useQueries';
 import { PriceChart } from '@/components/charts/PriceChart';
 import { formatPrice, formatPercentage, formatNumber, getChainName, getChainColor, shortenAddress, formatTimeAgo } from '@/lib/utils';
-import { Star, Copy, ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
+import { Star, Copy, ArrowLeft, TrendingUp, TrendingDown, Globe, Send, MessageCircle, ExternalLink } from 'lucide-react';
 import { BoostTokenButton } from '@/components/admin/DynamicContent';
 import { TokenLogo, getTokenLogoUrl } from '@/components/tokens/TokenLogo';
 import Link from 'next/link';
@@ -72,6 +72,13 @@ export default function TokenDetailPage() {
     const isPositive = priceChange >= 0;
     const logoUrl = getTokenLogoUrl(pair);
 
+    // Extract social links from pair info
+    const websites = pair.info?.websites || [];
+    const socials = pair.info?.socials || [];
+    const telegram = socials.find(s => s.type === 'telegram');
+    const twitter = socials.find(s => s.type === 'twitter');
+    const discord = socials.find(s => s.type === 'discord');
+
     return (
         <div className="space-y-6">
             {/* Back Button */}
@@ -124,7 +131,7 @@ export default function TokenDetailPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                     <button
                         onClick={handleWatchlistToggle}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-colors ${isWatched
@@ -133,19 +140,71 @@ export default function TokenDetailPage() {
                             }`}
                     >
                         <Star size={18} fill={isWatched ? 'currentColor' : 'none'} />
-                        {isWatched ? 'Watching' : 'Add to Watchlist'}
+                        {isWatched ? 'Watching' : 'Watchlist'}
                     </button>
+                    <BoostTokenButton tokenSymbol={pair.baseToken.symbol} />
+                </div>
+            </div>
+
+            {/* Social Links */}
+            {(websites.length > 0 || socials.length > 0 || pair.url) && (
+                <div className="flex items-center gap-3 flex-wrap">
+                    {websites.map((site, i) => (
+                        <a
+                            key={i}
+                            href={site.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm transition-colors"
+                        >
+                            <Globe size={16} className="text-emerald-400" />
+                            <span className="text-gray-300">{site.label || 'Website'}</span>
+                        </a>
+                    ))}
+                    {telegram && (
+                        <a
+                            href={telegram.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl text-sm transition-colors"
+                        >
+                            <Send size={16} className="text-blue-400" />
+                            <span className="text-blue-400">Telegram</span>
+                        </a>
+                    )}
+                    {twitter && (
+                        <a
+                            href={twitter.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 bg-sky-500/10 hover:bg-sky-500/20 rounded-xl text-sm transition-colors"
+                        >
+                            <MessageCircle size={16} className="text-sky-400" />
+                            <span className="text-sky-400">Twitter</span>
+                        </a>
+                    )}
+                    {discord && (
+                        <a
+                            href={discord.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-xl text-sm transition-colors"
+                        >
+                            <MessageCircle size={16} className="text-indigo-400" />
+                            <span className="text-indigo-400">Discord</span>
+                        </a>
+                    )}
                     <a
                         href={pair.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-white/5 text-gray-400 hover:bg-white/10 rounded-xl font-medium transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm transition-colors"
                     >
-                        Chart
+                        <ExternalLink size={16} className="text-gray-400" />
+                        <span className="text-gray-400">DexScreener</span>
                     </a>
-                    <BoostTokenButton tokenSymbol={pair.baseToken.symbol} />
                 </div>
-            </div>
+            )}
 
             {/* Price */}
             <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-6">
@@ -209,7 +268,7 @@ export default function TokenDetailPage() {
                 </div>
             </div>
 
-            {/* Transactions */}
+            {/* Transactions & Volume */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5">
                     <h3 className="text-lg font-semibold text-white mb-4">Transactions</h3>
@@ -274,19 +333,27 @@ export default function TokenDetailPage() {
 
             {/* Pair Info */}
             <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5">
-                <h3 className="text-lg font-semibold text-white mb-4">Pair Information</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">Token Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex justify-between py-2 border-b border-white/5">
+                        <span className="text-gray-500">Token Name</span>
+                        <span className="text-gray-300">{pair.baseToken.name || pair.baseToken.symbol}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-white/5">
+                        <span className="text-gray-500">Symbol</span>
+                        <span className="text-gray-300">{pair.baseToken.symbol}</span>
+                    </div>
                     <div className="flex justify-between py-2 border-b border-white/5">
                         <span className="text-gray-500">Pair Address</span>
                         <code className="text-gray-300">{shortenAddress(pair.pairAddress, 8)}</code>
                     </div>
                     <div className="flex justify-between py-2 border-b border-white/5">
-                        <span className="text-gray-500">Base Token</span>
+                        <span className="text-gray-500">Token Address</span>
                         <code className="text-gray-300">{shortenAddress(pair.baseToken.address, 8)}</code>
                     </div>
                     <div className="flex justify-between py-2 border-b border-white/5">
                         <span className="text-gray-500">Quote Token</span>
-                        <code className="text-gray-300">{shortenAddress(pair.quoteToken.address, 8)}</code>
+                        <span className="text-gray-300">{pair.quoteToken.symbol}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-white/5">
                         <span className="text-gray-500">DEX</span>
