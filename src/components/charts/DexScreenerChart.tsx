@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart3, CandlestickChart, TrendingUp, ExternalLink } from 'lucide-react';
+import { CandlestickChart, TrendingUp } from 'lucide-react';
 import { useSiteSettings } from '@/components/admin/DynamicContent';
 
 interface DexScreenerChartProps {
@@ -43,9 +43,6 @@ export function DexScreenerChart({
 
     // Build DexScreener embed URL with params
     const embedUrl = `https://dexscreener.com/${dexChain}/${pairAddress}?embed=1&theme=dark&trades=0&info=0`;
-
-    // DexScreener direct link 
-    const directLink = `https://dexscreener.com/${dexChain}/${pairAddress}`;
 
     // Get logo and site name from admin settings
     const siteName = isLoaded && settings.logo_text ? settings.logo_text : 'DexTrend';
@@ -96,21 +93,9 @@ export function DexScreenerChart({
                         ))}
                     </div>
                 </div>
-
-                {/* Open in DexScreener */}
-                <a
-                    href={directLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 hover:text-emerald-400 transition-colors"
-                >
-                    <BarChart3 size={14} />
-                    Open in DexScreener
-                    <ExternalLink size={12} />
-                </a>
             </div>
 
-            {/* Chart iframe container */}
+            {/* Chart iframe container with overlay to hide DexScreener branding */}
             <div className="relative" style={{ height }}>
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a] z-10">
@@ -123,10 +108,13 @@ export function DexScreenerChart({
                 <iframe
                     src={embedUrl}
                     className="w-full h-full border-0"
-                    title="DexScreener Chart"
+                    title="Price Chart"
                     onLoad={() => setIsLoading(false)}
                     allow="clipboard-write"
                 />
+
+                {/* Black overlay to hide DexScreener branding at bottom of iframe */}
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-[#0d0d0d] pointer-events-none" />
             </div>
 
             {/* Chart Legend with Dynamic Branding */}
