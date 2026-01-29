@@ -1,4 +1,4 @@
-import type { CapacitorConfig } from '@anthropic/capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
     appId: 'com.dextrend.app',
@@ -6,23 +6,6 @@ const config: CapacitorConfig = {
     webDir: 'out',
     server: {
         androidScheme: 'https'
-    },
-    android: {
-        allowMixedContent: true,
-        captureInput: true,
-        webContentsDebuggingEnabled: true
-    },
-    plugins: {
-        SplashScreen: {
-            launchShowDuration: 2000,
-            backgroundColor: '#0d0d0d',
-            androidSplashResourceName: 'splash',
-            showSpinner: false
-        },
-        StatusBar: {
-            style: 'DARK',
-            backgroundColor: '#0d0d0d'
-        }
     }
 };
 
