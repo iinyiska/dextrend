@@ -25,7 +25,6 @@ export function Sidebar() {
             className={cn(
                 'fixed left-0 top-16 bottom-0 z-40 w-64 bg-[#0d0d0d] border-r border-white/10',
                 'transition-transform duration-300 ease-in-out',
-                'lg:translate-x-0',
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             )}
         >

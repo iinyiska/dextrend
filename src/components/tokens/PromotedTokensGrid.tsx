@@ -141,7 +141,7 @@ export function PromotedTokensGrid({
                 {displayTokens.map((token: any) => (
                     <div
                         key={token.id || `${token.chainId}-${token.pairAddress}`}
-                        className="snap-center shrink-0 w-[90%] sm:w-[320px]"
+                        className="snap-center shrink-0 w-full sm:w-[320px]"
                     >
                         {/* Render PromotedCard or TokenCard based on data type */}
                         {token.pair_address ? (
