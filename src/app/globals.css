@@ -191,10 +191,7 @@ table {
     padding: 0.75rem !important;
   }
 
-  /* Hide sidebar completely on mobile */
-  aside {
-    transform: translateX(-100%);
-  }
+
 
   /* Compact header */
   header .flex {

@@ -1,7 +1,7 @@
 {
     "$schema": "https://capacitorjs.com/docs/cli/configuration",
-    "appId": "com.dextrend.app",
-    "appName": "DexTrend",
+    "appId": "com.gujindex.app",
+    "appName": "GujinDex",
     "webDir": "out",
     "server": {
         "androidScheme": "https",

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">DexTrend</string>
-    <string name="title_activity_main">DexTrend</string>
-    <string name="package_name">com.dextrend.app</string>
-    <string name="custom_url_scheme">com.dextrend.app</string>
+    <string name="app_name">GujinDextrend</string>
+    <string name="title_activity_main">GujinDextrend</string>
+    <string name="package_name">com.gujindex.app</string>
+    <string name="custom_url_scheme">com.gujindex.app</string>
 </resources>
