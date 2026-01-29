@@ -53,8 +53,8 @@ export interface PromotedToken {
 
 const defaultSettings: SiteSettings = {
     logo_url: '',
-    logo_text: 'GujinDextrend',
-    site_title: 'GujinDextrend - Real-Time DEX Analytics',
+    logo_text: 'GujinDex',
+    site_title: 'GujinDex - Real-Time DEX Analytics',
     site_description: 'Track trending tokens across multiple blockchains',
     primary_color: '#00ff88',
     header_bg_color: '#0d0d0d',

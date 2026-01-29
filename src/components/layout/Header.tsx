@@ -60,9 +60,10 @@ export function Header() {
                     <div className="flex items-center gap-4">
                         <button
                             onClick={toggleSidebar}
-                            className="p-2 rounded-lg hover:bg-white/10 transition-colors lg:hidden"
+                            className="p-3 mr-2 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all lg:hidden"
+                            aria-label="Toggle Menu"
                         >
-                            <Menu size={20} />
+                            <Menu size={24} />
                         </button>
 
                         <Link href="/" className="flex items-center gap-2">
