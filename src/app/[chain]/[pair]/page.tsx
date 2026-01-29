@@ -2,7 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import { usePair } from '@/hooks/useQueries';
-import { PriceChart } from '@/components/charts/PriceChart';
+import { DexScreenerChart } from '@/components/charts/DexScreenerChart';
+import { TransactionHistory } from '@/components/charts/TransactionHistory';
 import { formatPrice, formatPercentage, formatNumber, getChainName, getChainColor, shortenAddress, formatTimeAgo } from '@/lib/utils';
 import { Star, Copy, ArrowLeft, TrendingUp, TrendingDown, Globe, Send, MessageCircle, ExternalLink } from 'lucide-react';
 import { BoostTokenButton } from '@/components/admin/DynamicContent';
@@ -243,10 +244,11 @@ export default function TokenDetailPage() {
                 </div>
             </div>
 
-            {/* Chart */}
-            <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 overflow-hidden">
-                <PriceChart chainId={chainId} pairAddress={pairAddress} height={500} />
-            </div>
+            {/* DexScreener Chart */}
+            <DexScreenerChart chainId={chainId} pairAddress={pairAddress} height={450} />
+
+            {/* Transaction History */}
+            <TransactionHistory pair={pair} chainId={chainId} itemsPerPage={5} />
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
